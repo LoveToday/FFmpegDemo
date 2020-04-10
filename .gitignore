@@ -66,3 +66,11 @@ fastlane/test_output
 # https://github.com/johnno1962/injectionforxcode
 
 iOSInjectionProject/
+FFmpeg-myDemo/FFmpeg-iOS/lib/libavcodec.a
+FFmpeg-myDemo/FFmpeg-iOS/lib/libavdevice.a
+FFmpeg-myDemo/FFmpeg-iOS/lib/libavfilter.a
+FFmpeg-myDemo/FFmpeg-iOS/lib/libavformat.a
+FFmpeg-myDemo/FFmpeg-iOS/lib/libavutil.a
+FFmpeg-myDemo/FFmpeg-iOS/lib/libswresample.a
+FFmpeg-myDemo/FFmpeg-iOS/lib/libswscale.a
+Video_2019-09-03_215059.wmv
