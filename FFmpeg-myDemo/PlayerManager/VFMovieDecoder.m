@@ -239,7 +239,7 @@ static void avStreamFPSTimeBase(AVStream *st, CGFloat defaultTimeBase, CGFloat *
     if (pTimeBase)
         *pTimeBase = timebase;
 }
-
+/// 返回的是视频type  AVMEDIA_TYPE_VIDEO 或是 AVMEDIA_TYPE_AUDIO 等
 static NSArray *collectStreams(AVFormatContext *formatCtx, enum AVMediaType codecType)
 {
     NSMutableArray *ma = [NSMutableArray array];
@@ -309,7 +309,7 @@ static int interrupt_callback(void *ctx);
 
 @implementation VFVideoFrameRGB
 - (KxVideoFrameFormat) format { return KxVideoFrameFormatRGB; }
-- (UIImage *) asImage
+- (UIImage *)asImage
 {
     UIImage *image = nil;
     
@@ -440,7 +440,7 @@ static int interrupt_callback(void *ctx);
 @dynamic videoStreamFormatName;
 @dynamic startTime;
 
-- (CGFloat) duration
+- (CGFloat)duration
 {
     if (!_formatCtx)
         return 0;
@@ -449,12 +449,12 @@ static int interrupt_callback(void *ctx);
     return (CGFloat)_formatCtx->duration / AV_TIME_BASE;
 }
 
-- (CGFloat) position
+- (CGFloat)position
 {
     return _position;
 }
-
-- (void) setPosition: (CGFloat)seconds
+/// 设置播放的进度
+- (void)setPosition:(CGFloat)seconds
 {
     _position = seconds;
     _isEOF = NO;
@@ -472,32 +472,32 @@ static int interrupt_callback(void *ctx);
     }
 }
 
-- (NSUInteger) frameWidth
+- (NSUInteger)frameWidth
 {
     return _videoCodecCtx ? _videoCodecCtx->width : 0;
 }
 
-- (NSUInteger) frameHeight
+- (NSUInteger)frameHeight
 {
     return _videoCodecCtx ? _videoCodecCtx->height : 0;
 }
 
-- (CGFloat) sampleRate
+- (CGFloat)sampleRate
 {
     return _audioCodecCtx ? _audioCodecCtx->sample_rate : 0;
 }
 
-- (NSUInteger) audioStreamsCount
+- (NSUInteger)audioStreamsCount
 {
     return [_audioStreams count];
 }
 
-- (NSUInteger) subtitleStreamsCount
+- (NSUInteger)subtitleStreamsCount
 {
     return [_subtitleStreams count];
 }
 
-- (NSInteger) selectedAudioStream
+- (NSInteger)selectedAudioStream
 {
     if (_audioStream == -1)
         return -1;
@@ -505,7 +505,7 @@ static int interrupt_callback(void *ctx);
     return [_audioStreams indexOfObject:n];
 }
 
-- (void) setSelectedAudioStream:(NSInteger)selectedAudioStream
+- (void)setSelectedAudioStream:(NSInteger)selectedAudioStream
 {
     NSInteger audioStream = [_audioStreams[selectedAudioStream] integerValue];
     [self closeAudioStream];
@@ -515,7 +515,7 @@ static int interrupt_callback(void *ctx);
     }
 }
 
-- (NSInteger) selectedSubtitleStream
+- (NSInteger)selectedSubtitleStream
 {
     if (_subtitleStream == -1)
         return -1;
@@ -555,7 +555,7 @@ static int interrupt_callback(void *ctx);
     return _subtitleStream != -1;
 }
 
-- (NSDictionary *) info
+- (NSDictionary *)info
 {
     if (!_info) {
         
@@ -654,7 +654,7 @@ static int interrupt_callback(void *ctx);
     return _info;
 }
 
-- (NSString *) videoStreamFormatName
+- (NSString *)videoStreamFormatName
 {
     if (!_videoCodecCtx)
         return nil;
@@ -666,7 +666,7 @@ static int interrupt_callback(void *ctx);
     return name ? [NSString stringWithCString:name encoding:NSUTF8StringEncoding] : @"?";
 }
 
-- (CGFloat) startTime
+- (CGFloat)startTime
 {
     if (_videoStream != -1) {
         
@@ -694,8 +694,8 @@ static int interrupt_callback(void *ctx);
     avformat_network_init();
 }
 
-+ (id) movieDecoderWithContentPath: (NSString *) path
-                             error: (NSError **) perror
++ (id)movieDecoderWithContentPath:(NSString *)path
+                             error:(NSError **)perror
 {
     VFMovieDecoder *mp = [[VFMovieDecoder alloc] init];
     if (mp) {
@@ -712,8 +712,8 @@ static int interrupt_callback(void *ctx);
 
 #pragma mark - private
 
-- (BOOL) openFile: (NSString *) path
-            error: (NSError **) perror
+- (BOOL)openFile:(NSString *)path
+           error:(NSError **)perror
 {
     NSAssert(path, @"nil path");
     NSAssert(!_formatCtx, @"already open");
@@ -746,6 +746,7 @@ static int interrupt_callback(void *ctx);
         } else {
             
             _subtitleStreams = collectStreams(_formatCtx, AVMEDIA_TYPE_SUBTITLE);
+            
         }
     }
     

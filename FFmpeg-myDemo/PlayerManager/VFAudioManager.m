@@ -22,7 +22,7 @@ static void sessionPropertyListener(void *inClientData, AudioSessionPropertyID i
 static void sessionInterruptionListener(void *inClientData, UInt32 inInterruption);
 static OSStatus renderCallback (void *inRefCon, AudioUnitRenderActionFlags    *ioActionFlags, const AudioTimeStamp * inTimeStamp, UInt32 inOutputBusNumber, UInt32 inNumberFrames, AudioBufferList* ioData);
 
-@interface KxAudioManagerImpl: VFAudioManager<VFAudioManager> {
+@interface VFAudioManagerImpl: VFAudioManager<VFAudioManager> {
     
     BOOL                        _initialized;
     BOOL                        _activated;
@@ -55,19 +55,19 @@ static OSStatus renderCallback (void *inRefCon, AudioUnitRenderActionFlags    *i
 
 @implementation VFAudioManager
 
-+ (instancetype)audioManager
++ (id<VFAudioManager>)audioManager
 {
-    static KxAudioManagerImpl *audioManager = nil;
+    static VFAudioManagerImpl *audioManager = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        audioManager = [[KxAudioManagerImpl alloc] init];
+        audioManager = [[VFAudioManagerImpl alloc] init];
     });
     return audioManager;
 }
 
 @end
 
-@implementation KxAudioManagerImpl
+@implementation VFAudioManagerImpl
 
 - (id)init
 {
@@ -442,7 +442,7 @@ static void sessionPropertyListener(void *                  inClientData,
                                     UInt32                  inDataSize,
                                     const void *            inData)
 {
-    KxAudioManagerImpl *sm = (__bridge KxAudioManagerImpl *)inClientData;
+    VFAudioManagerImpl *sm = (__bridge VFAudioManagerImpl *)inClientData;
     
     if (inID == kAudioSessionProperty_AudioRouteChange) {
         
@@ -461,7 +461,7 @@ static void sessionPropertyListener(void *                  inClientData,
 //音频会话中断状态
 static void sessionInterruptionListener(void *inClientData, UInt32 inInterruption)
 {
-    KxAudioManagerImpl *sm = (__bridge KxAudioManagerImpl *)inClientData;
+    VFAudioManagerImpl *sm = (__bridge VFAudioManagerImpl *)inClientData;
     
     if (inInterruption == kAudioSessionBeginInterruption) {
         
@@ -484,7 +484,7 @@ static OSStatus renderCallback(void                        *inRefCon,
                                 UInt32                        inNumberFrames,
                                 AudioBufferList                * ioData)
 {
-    KxAudioManagerImpl *sm = (__bridge KxAudioManagerImpl *)inRefCon;
+    VFAudioManagerImpl *sm = (__bridge VFAudioManagerImpl *)inRefCon;
     return [sm renderFrames:inNumberFrames ioData:ioData];
 }
 

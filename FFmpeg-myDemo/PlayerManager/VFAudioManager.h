@@ -33,7 +33,7 @@ typedef void (^KxAudioManagerOutputBlock)(float *data, UInt32 numFrames, UInt32 
 @end
 
 @interface VFAudioManager: NSObject
-+ (instancetype)audioManager;
++ (id<VFAudioManager>)audioManager;
 @end
 
 NS_ASSUME_NONNULL_END
