@@ -705,8 +705,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = NPZ3HL8S7P;
+				DEVELOPMENT_TEAM = 8UCCBQBSN8;
+				GCC_C_LANGUAGE_STANDARD = gnu89;
 				HEADER_SEARCH_PATHS = "\"$(SRCROOT)/FFmpeg-myDemo/FFmpeg-iOS/include\"";
 				INFOPLIST_FILE = "FFmpeg-myDemo/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
@@ -718,7 +720,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/FFmpeg-myDemo/FFmpeg-iOS/lib",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.vaffle.test;
+				PRODUCT_BUNDLE_IDENTIFIER = com.trenderclub.vf;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -728,8 +730,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = NPZ3HL8S7P;
+				DEVELOPMENT_TEAM = 8UCCBQBSN8;
+				GCC_C_LANGUAGE_STANDARD = gnu89;
 				HEADER_SEARCH_PATHS = "\"$(SRCROOT)/FFmpeg-myDemo/FFmpeg-iOS/include\"";
 				INFOPLIST_FILE = "FFmpeg-myDemo/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
@@ -741,7 +745,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/FFmpeg-myDemo/FFmpeg-iOS/lib",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.vaffle.test;
+				PRODUCT_BUNDLE_IDENTIFIER = com.trenderclub.vf;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

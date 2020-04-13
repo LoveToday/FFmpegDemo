@@ -13,7 +13,16 @@
 #include "libswresample/swresample.h"
 #include "libavutil/pixdesc.h"
 #import "VFAudioManager.h"
-//#import "KxLogger.h"
+/// 滤镜
+#include "libavfilter/avfilter.h"
+#include "libavfilter/avfiltergraph.h"
+#include "libavcodec/avcodec.h"
+#include "libavfilter/buffersink.h"
+#include "libavfilter/buffersrc.h"
+#include "libavutil/opt.h"
+#include "libavutil/pixdesc.h"
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 NSString * kxmovieErrorDomain = @"ru.kolyvan.kxmovie";
@@ -419,6 +428,13 @@ static int interrupt_callback(void *ctx);
     KxVideoFrameFormat  _videoFrameFormat;
     NSUInteger          _artworkStream;
     NSInteger           _subtitleASSEvents;
+    
+    
+    /// 滤镜context
+    AVFilterContext *buffersink_ctx;
+    AVFilterContext *buffersrc_ctx;//认为它是AVFilter的一个实例就OK了
+    AVFilterGraph   *filter_graph;
+    
 }
 @end
 
@@ -690,8 +706,101 @@ static int interrupt_callback(void *ctx);
 + (void)initialize
 {
     av_log_set_callback(FFLog);
+    ///   注册
     av_register_all();
+    
+    /// 注册滤镜
+    
+    ////注册滤波器组件
+    avfilter_register_all();
+    
+    
     avformat_network_init();
+    
+    
+}
+
+AVFilterContext *buffersink_ctx;
+AVFilterContext *buffersrc_ctx;//认为它是AVFilter的一个实例就OK了
+AVFilterGraph *filter_graph;
+
+- (int)initFilter{
+    
+//    const char *file_name = (env)->GetStringUTFChars(filePath, JNI_FALSE);
+    //const char *filter_descr = "yuii";
+    
+    // 画矩形
+    char *filter_descr = "drawbox=x=10:y=20:w=200:h=60:color=red@0.5";
+    
+    
+    char args[512];
+    int ret;
+    
+    //Filter的具体定义，只要是libavfilter中已注册的filter，
+    //就可以直接通过查询filter名字的方法获得其具体定义，所谓
+    //定义即filter的名称、功能描述、输入输出pad、相关回调函数等
+    AVFilter *buffersrc  = avfilter_get_by_name("buffer"); /* 输入buffer filter */
+    AVFilter *buffersink = avfilter_get_by_name("buffersink"); /* 输出buffer filter */
+    
+    //AVFilterInOut对应buffer和buffersink这两个首尾端的filter的输入输出
+    AVFilterInOut *outputs = avfilter_inout_alloc();
+    AVFilterInOut *inputs  = avfilter_inout_alloc();
+    
+    enum AVPixelFormat pix_fmts[] = {AV_PIX_FMT_YUV420P, AV_PIX_FMT_NONE };
+    AVRational time_base = _formatCtx->streams[_videoStream]->time_base;/* 时间基数 */
+    AVBufferSinkParams *buffersink_params;
+
+    filter_graph = avfilter_graph_alloc();
+
+//    snprintf(args, sizeof(args),
+//             "video_size=%dx%d:pix_fmt=%d:time_base=%d/%d:pixel_aspect=%d/%d",
+//             pCodecCtx->width, pCodecCtx->height, pCodecCtx->pix_fmt,
+//             time_base.num, time_base.den,
+//             pCodecCtx->sample_aspect_ratio.num, pCodecCtx->sample_aspect_ratio.den);
+
+    //根据指定的Filter，这里就是buffer，构造对应的初始化参数args，二者结合即可创建Filter的示例，并放入filter_graph中
+    ret = avfilter_graph_create_filter(&buffersrc_ctx, buffersrc, "in",
+                                       args, NULL, filter_graph);
+    if (ret < 0) {
+//        LOGD("Cannot create buffer source === %d\n",ret);
+        return ret;
+    }
+
+    /* buffer video sink: to terminate the filter chain. */
+    buffersink_params = av_buffersink_params_alloc();
+    buffersink_params->pixel_fmts = pix_fmts;
+    ret = avfilter_graph_create_filter(&buffersink_ctx, buffersink, "out",
+                                       NULL, buffersink_params, filter_graph);
+    av_free(buffersink_params);
+    if (ret < 0) {
+//        LOGD("Cannot create buffer sink\n");
+        return ret;
+    }
+
+    /* Endpoints for the filter graph. */
+    outputs->name       = av_strdup("in");
+    outputs->filter_ctx = buffersrc_ctx;
+    outputs->pad_idx    = 0;
+    outputs->next       = NULL;
+
+    inputs->name       = av_strdup("out");
+    inputs->filter_ctx = buffersink_ctx;
+    inputs->pad_idx    = 0;
+    inputs->next       = NULL;
+
+    //filter_descr是一个filter命令，例如"overlay=iw:ih"，该函数可以解析这个命令，
+    //然后自动完成FilterGraph中各个Filter之间的联接
+    if ((ret = avfilter_graph_parse_ptr(filter_graph, filter_descr,
+                                        &inputs, &outputs, NULL)) < 0) {
+//        LOGD("Cannot avfilter_graph_parse_ptr\n");
+        return ret;
+    }
+
+    if ((ret = avfilter_graph_config(filter_graph, NULL)) < 0) {//检查当前所构造的FilterGraph的完整性与可用性
+//        LOGD("Cannot avfilter_graph_config\n");
+        return ret;
+    }
+    return 0;
 }
 
 + (id)movieDecoderWithContentPath:(NSString *)path
@@ -763,7 +872,7 @@ static int interrupt_callback(void *ctx);
     return YES;
 }
 
-- (kxMovieError) openInput: (NSString *) path
+- (kxMovieError)openInput:(NSString *)path
 {
     AVFormatContext *formatCtx = NULL;
     
@@ -775,6 +884,7 @@ static int interrupt_callback(void *ctx);
         
         AVIOInterruptCB cb = {interrupt_callback, (__bridge void *)(self)};
         formatCtx->interrupt_callback = cb;
+        
     }
     
     if (avformat_open_input(&formatCtx, [path cStringUsingEncoding: NSUTF8StringEncoding], NULL, NULL) < 0) {
@@ -796,7 +906,7 @@ static int interrupt_callback(void *ctx);
     return kxMovieErrorNone;
 }
 
-- (kxMovieError) openVideoStream
+- (kxMovieError)openVideoStream
 {
     kxMovieError errCode = kxMovieErrorStreamNotFound;
     _videoStream = -1;
@@ -881,7 +991,7 @@ static int interrupt_callback(void *ctx);
     return errCode;
 }
 
-- (kxMovieError) openAudioStream: (NSInteger) audioStream
+- (kxMovieError)openAudioStream:(NSInteger) audioStream
 {
     AVCodecContext *codecCtx = _formatCtx->streams[audioStream]->codec;
     SwrContext *swrContext = NULL;
@@ -943,7 +1053,7 @@ static int interrupt_callback(void *ctx);
     return kxMovieErrorNone;
 }
 
-- (kxMovieError) openSubtitleStream: (NSInteger) subtitleStream
+- (kxMovieError)openSubtitleStream:(NSInteger) subtitleStream
 {
     AVCodecContext *codecCtx = _formatCtx->streams[subtitleStream]->codec;
     
@@ -1082,7 +1192,7 @@ static int interrupt_callback(void *ctx);
     }
 }
 
-- (BOOL) setupScaler
+- (BOOL)setupScaler
 {
     [self closeScaler];
     
@@ -1107,7 +1217,7 @@ static int interrupt_callback(void *ctx);
     return _swsContext != NULL;
 }
 
-- (VFVideoFrame *) handleVideoFrame
+- (VFVideoFrame *)handleVideoFrame
 {
     if (!_videoFrame->data[0])
         return nil;
@@ -1134,6 +1244,9 @@ static int interrupt_callback(void *ctx);
                                          _videoCodecCtx->height / 2);
         
         frame = yuvFrame;
+        
+//        av_buffersink_get_frame(<#AVFilterContext *ctx#>, _videoFrame)
+        
     
     } else {
     
@@ -1192,7 +1305,7 @@ static int interrupt_callback(void *ctx);
     return frame;
 }
 
-- (VFAudioFrame *) handleAudioFrame
+- (VFAudioFrame *)handleAudioFrame
 {
     if (!_audioFrame->data[0])
         return nil;
@@ -1279,7 +1392,7 @@ static int interrupt_callback(void *ctx);
     return frame;
 }
 
-- (VFSubtitleFrame *) handleSubtitle: (AVSubtitle *)pSubtitle
+- (VFSubtitleFrame *)handleSubtitle:(AVSubtitle *)pSubtitle
 {
     NSMutableString *ms = [NSMutableString string];
     
@@ -1327,7 +1440,7 @@ static int interrupt_callback(void *ctx);
     return frame;
 }
 
-- (BOOL) interruptDecoder
+- (BOOL)interruptDecoder
 {
     if (_interruptCallback)
         return _interruptCallback();
@@ -1336,7 +1449,7 @@ static int interrupt_callback(void *ctx);
 
 #pragma mark - public
 
-- (BOOL) setupVideoFrameFormat: (KxVideoFrameFormat) format
+- (BOOL)setupVideoFrameFormat:(KxVideoFrameFormat) format
 {
     if (format == KxVideoFrameFormatYUV &&
         _videoCodecCtx &&
@@ -1507,9 +1620,10 @@ static int interrupt_callback(void *ctx);
     return result;
 }
 
+
+
 @end
 
-//////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
 static int interrupt_callback(void *ctx)

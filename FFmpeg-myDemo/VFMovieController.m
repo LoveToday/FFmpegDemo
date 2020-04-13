@@ -17,7 +17,6 @@ NSString * const VFMovieMinBufferedDuration = @"VFMovieMinBufferedDuration";
 NSString * const VFMovieMaxBufferedDuration = @"VFMovieMaxBufferedDuration";
 NSString * const VFMovieDisableDeinterlacing = @"VFMovieDisableDeinterlacing";
 
-////////////////////////////////////////////////////////////////////////////////
 
 static NSString * formatTimeInterval(CGFloat seconds, BOOL isLeft)
 {
@@ -1119,7 +1118,7 @@ _messageLabel.hidden = YES;
     return correction;
 }
 
-- (CGFloat) presentFrame
+- (CGFloat)presentFrame
 {
     CGFloat interval = 0;
     
@@ -1162,7 +1161,7 @@ _messageLabel.hidden = YES;
     return interval;
 }
 
-- (CGFloat) presentVideoFrame: (VFVideoFrame *) frame
+- (CGFloat)presentVideoFrame:(VFVideoFrame *)frame
 {
     if (_glView) {
         
@@ -1179,7 +1178,7 @@ _messageLabel.hidden = YES;
     return frame.duration;
 }
 
-- (void) presentSubtitles
+- (void)presentSubtitles
 {
     NSArray *actual, *outdated;
     
